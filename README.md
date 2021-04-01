@@ -1,4 +1,4 @@
-![](C:\Users\User\Google Drive\Projects\mini_lucid_tf2\collage.jpg)
+![](collage.jpg)
 
 # Feature Visualization: Mini Lucid TF2 
 
