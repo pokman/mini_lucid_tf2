@@ -20,9 +20,9 @@ This approach of feature visualization consists of the following ingredients:
 
 The following notebooks illustrates some applications of this repository:
 
-- Demo
-- Diversity of Features
-- Regularization
+- [Demo](https://colab.research.google.com/github/pokman/mini_lucid_tf2/blob/main/feature_viz_demo.ipynb)
+- [Diversity of Features](https://colab.research.google.com/github/pokman/mini_lucid_tf2/blob/main/feature_viz_diversity.ipynb)
+- [Regularization](https://colab.research.google.com/github/pokman/mini_lucid_tf2/blob/main/feature_viz_regularization.ipynb)
 
 
 
