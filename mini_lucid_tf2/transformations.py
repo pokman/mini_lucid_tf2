@@ -132,7 +132,7 @@ def _rotate(img_batch, angle, fill=0.5, interpolate='bilinear'):
     else:
         raise ValueError("interpolate must be 'bilinear' or 'nearest'")
 
-    if type(fill) == float:
+    if type(fill) in [float, int]:
         # restore the original shape
         img_rot = img_rot[:, 1:-1, 1:-1, :]
     
