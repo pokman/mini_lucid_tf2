@@ -8,40 +8,28 @@ rgb_cov = np.array([[0.0761, 0.0692, 0.0627],
 
 
 class ImageParam(object):
+    """Represents a parametrization of an image (batch) in frequency space. Provides a method to
+    evaluate the pixels.
 
-    '''Represents a parametrization of an image (batch) in frequency space. 
-    Provides a method to evaluate the pixels.
-    
     Attributes
     ----------
-    h, w : int
-        Height and width of each image.
-    
-    batch : int
-        Batch size of images.
-    
     shape : tuple
-        Shape of the image batch, given by ('batch', 'h', 'w', 3).
-    
+        Shape of the image batch, of the form (batch size, height, width, 3).
     param : tf.Variable of float
-        Parameters of the image batch. At construction, the values are
-        initialized randomly with zero mean and specified standard deviation
-        (init_noise).
-    
+        Parameters of the image batch. At construction, the values are initialized randomly with
+        zero mean and specified standard deviation (init_noise).
     freq_decay : float
-        Frequency decay rate, controlling the downscaling of high frequency
-        modes when the image parameters are evaluated into pixels.
-    
+        Frequency decay rate, controlling the downscaling of high frequency modes when the image
+        parameters are evaluated into pixels.
     rgb_corr : bool
-        Whether to impose empirical RGB correlations when the image parameters 
-        are evaluated into pixels.
-    
+        Whether to impose empirical RGB correlations when the image parameters are evaluated into
+        pixels.
+
     Methods
     -------
     eval
         Evaluates the image parameters into pixels.
-
-    '''
+    """
     
     def __init__(self, h, w=None, batch=1, init_noise=0.01, freq_decay=1.0, rgb_corr=True):
         w = w or h
@@ -53,31 +41,27 @@ class ImageParam(object):
         self.rgb_corr = rgb_corr
     
     def eval(self):
+        """Evaluates the image parameters into pixels. This consists of several steps, all of which
+        are bijections:
 
-        '''Evaluates the image parameters into pixels. This consists of several
-        steps, all of which are bijiections:
-            
-        1. Using simple row and column operations, transform the (h, w) matrix
-        of parameters (per channel) into a (h, w//2+1) complex-valued matrix
-        that satisfies the exact constraints to be the (real) FFT of a (h, w)
-        real-valued matrix.
-        
-        2. Rescale values using a (decreasing) function of respective
-        frequencies and the specified decay rate (freq_decay).
-        
+        1. Using simple row and column operations, transform the (h, w) matrix of parameters (per
+        channel) into a (h, w//2+1) complex-valued matrix that satisfies the exact constraints to be
+        the (real) FFT of a (h, w) real-valued matrix.
+
+        2. Rescale values using a (decreasing) function of respective frequencies and the specified
+        decay rate (freq_decay).
+
         3. Apply inverse FFT.
-        
+
         4. Impose empirical correlations across RGB channels.
-        
+
         5. Map all values into [0,1] using a sigmoid.
-        
+
         Returns
         -------
         img_batch : 4D tensor
-            Batch of image pixels, with dimensions (batch, height, width, 
-            channel).
-        
-        '''
+            Batch of image pixels, of the shape (batch size, height, width, number of channels).
+        """
 
         _, h, w, _ = self.shape
         
@@ -114,7 +98,7 @@ class ImageParam(object):
         
     @staticmethod
     def _fold_h(h):
-        '''Row operations on the matrix of parameters (see eval()).'''
+        """Row operations on the matrix of parameters (see eval())."""
         m = np.eye(h, dtype=np.complex64)
         m[1:(h-1)//2+1, 1:(h-1)//2+1] = np.eye((h-1)//2) * (0.5 + 0.5j)
         m[1:(h-1)//2+1, h//2+1:] = np.eye((h-1)//2)[::-1] * (0.5 - 0.5j)
@@ -124,9 +108,8 @@ class ImageParam(object):
         
     @staticmethod
     def _fold_w(w):
-        '''Column operations on the matrix of parameters (see eval()).'''
+        """Column operations on the matrix of parameters (see eval())."""
         m = np.eye(w, w//2+1, dtype=np.complex64)
         m[1:(w-1)//2+1, 1:(w-1)//2+1] = np.eye((w-1)//2) * (0.5 + 0.5j)
         m[w//2+1:, 1:(w-1)//2+1] = np.eye((w-1)//2)[::-1] * (0.5 - 0.5j)
         return m
-

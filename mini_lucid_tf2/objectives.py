@@ -3,21 +3,18 @@ import numpy as np
 
 
 class Objective(object):
-    
-    '''Represents a generic objective function of an image (batch). Provides
-    callability and basic arithmetic operations (+, -, * scalar) to instances. 
-    
+    """Represents a generic objective function of an image (batch). Provides callability and basic
+    arithmetic operations (+, -, * scalar) to instances.
+
     Attributes
     ----------
     func : function taking a 4D tensor to a 1D tensor
-        Element-wise scalar function on a batch of images. The input is 
-        expected to have dimensions (batch, height, width, channel), and the 
+        Element-wise scalar function on a batch of images. The input is
+        expected to have dimensions (batch, height, width, channel), and the
         output is expected to have only the batch dimension.
-    
     batch : int or None
         Required batch size of images, if any.
-    
-    '''
+    """
     
     def __init__(self, func, batch=None):
         self.func = func
@@ -49,48 +46,41 @@ class Objective(object):
     def __sub__(self, other):
         return self + other * -1
 
-        
+
 def L1(base=0.5):
-    '''Defines an objective function by the L1 norm of pixels with respect to 
-    a base value.'''
+    """Defines an objective function by the L1 norm of pixels with respect to a base value."""
     def func(image_batch):
         return tf.reduce_mean(tf.abs(image_batch - base), axis=[1, 2, 3])
     return Objective(func)
 
 
 def TotalVar():
-    '''Defines an objective function by the total variation of pixels.'''
+    """Defines an objective function by the total variation of pixels."""
     def func(image_batch):
         vol = tf.cast(tf.reduce_prod(tf.shape(image_batch)[1:]), tf.float32)
         return tf.image.total_variation(image_batch) / vol
     return Objective(func)
-    
+
 
 class LayerObjective(Objective):
-    
-    '''Represents an objective function of an image (batch) determined by
-    its activations in a specific layer of a specific model. Provides
-    callability and basic arithmetic operations (+, -, * scalar) to instances,
-    such that combinations of instances require only a single evaluation of
+    """Represents an objective function of an image (batch) determined by its activations in a
+    specific layer of a specific model. Provides callability and basic arithmetic operations (+, -,
+    * scalar) to instances, such that combinations of instances require only a single evaluation of
     the layer.
-    
+
     Attributes
     ----------
     model : tf.keras.Model
         Keras model that takes images as inputs.
-    
     layer : str
         Name of a layer in 'model'.
-    
     layer_func : function taking a nD tensor (n>1) to a 1D tensor
-        Element-wise scalar function on a batch of activations of 'layer'. The 
-        input is expected to have dimensions (batch, *output shape of 'layer'),
-        and the output is expected to have only the batch dimension.
-    
+        Element-wise scalar function on a batch of activations of 'layer'. The input is expected to
+        have dimensions (batch, *output shape of 'layer'), and the output is expected to have only
+        the batch dimension.
     batch : int or None
         Required batch size of images, if any.
-    
-    '''
+    """
     
     def __init__(self, model, layer, layer_func, batch=None):
         self.model = model
@@ -134,27 +124,22 @@ class LayerObjective(Objective):
         
 
 def LinearlyCombinedChannels(model, layer, channels, weights):
-    
-    '''Defines an objective function by linear combinations of mean channel
+    """Defines an objective function by linear combinations of mean channel
     activations in a layer of a model.
-    
+
     Parameters
     ----------
     model, layer : same as LayerObjective
-    
     channels : list of int
         List of channel numbers.
-    
     weights : 1D or 2D array of float
         Weights on 'channels', of dimensions (channel,) or (batch, channel).
-    
+
     Returns
     -------
     LayerObjective
-        Linear combination(s) of mean channel outputs as specified by 
-        'channels' and 'weights'.
-    
-    '''
+        Linear combination(s) of mean channel outputs as specified by 'channels' and 'weights'.
+    """
     
     weights = np.array(weights)
     if len(weights.shape) not in (1, 2):
@@ -173,24 +158,26 @@ def LinearlyCombinedChannels(model, layer, channels, weights):
     
    
 def Channel(model, layer, channel):
-    '''Defines an objective function by the mean activation of a channel in a
-    layer of a model.'''
+    """Defines an objective function by the mean activation of a channel in a layer of a model."""
     return LinearlyCombinedChannels(model, layer, [channel], [1])
 
+
 def Channels(model, layer, channels):
-    '''Defines an objective function by the mean activations of several 
-    channels in a layer of a model.'''
+    """Defines an objective function by the mean activations of several channels in a layer of a
+    model."""
     return LinearlyCombinedChannels(model, layer, channels, np.eye(len(channels)))
 
+
 def InterpolatedChannels(model, layer, channel1, channel2, intervals=2):
-    '''Defines an objective function by linearly interpolating the mean 
-    activations of two channels in a layer of a model.'''
+    """Defines an objective function by linearly interpolating the mean activations of two channels
+    in a layer of a model."""
     weights = [[1 - i / intervals, i / intervals] for i in range(intervals + 1)]
     return LinearlyCombinedChannels(model, layer, [channel1, channel2], weights)
 
+
 def GramCosSim(model, layer):
-    '''Defines an objective function by the mean cosine similarity in Gram
-    matrix with the other images in the batch.'''
+    """Defines an objective function by the mean cosine similarity in Gram matrix with the other
+    images in the batch."""
     def layer_func(layer_output):
         # batch / spatial / channel indices: a, b / i, j / p, q
         batch = tf.shape(layer_output).numpy()[0]
@@ -203,19 +190,19 @@ def GramCosSim(model, layer):
         return tf.reduce_mean(gram_cossim, axis=1)
     return LayerObjective(model, layer, layer_func)
 
+
 class LayerObjectiveFactory(object):
-    
-    '''Represents a generator of objective functions based on the same layer
-    of a model. An example of its usage is as follows:
-    
+    """Represents a generator of objective functions based on the same layer of a model. An example
+    of its usage is as follows:
+
         obj_gen = LayerObjectiveFactory(model, layer)
         obj = obj_gen(objectives.Channel, channel)
         obj -= obj_gen(objectives.GramCosSim) * 100
         ...
-    
-    In general, it can be called on (method, *args), where 'method' is any
-    function taking (model, layer, *args) to a LayerObjective instance.
-    '''
+
+    In general, it can be called on (method, *args), where 'method' is any function taking (model,
+    layer, *args) to a LayerObjective instance.
+    """
     
     def __init__(self, model, layer):
         self.model = model
@@ -223,5 +210,3 @@ class LayerObjectiveFactory(object):
 
     def __call__(self, method, *args):
         return method(self.model, self.layer, *args)
-        
-

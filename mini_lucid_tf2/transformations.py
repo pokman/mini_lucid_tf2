@@ -3,9 +3,8 @@ import numpy as np
 
 
 def pad(n):
-    '''Constructs a tensor-native function that pads a batch of images with n 
-    extra pixels on each side, i.e. it increases dimensions by (0, 2n, 2n, 0).
-    '''
+    """Constructs a tensor-native function that pads a batch of images with n extra pixels on each
+    side, i.e. it increases dimensions by (0, 2n, 2n, 0)."""
     def tr(img_batch):
         paddings = [[0, 0], [n, n], [n, n], [0, 0]]
         img_batch = tf.pad(img_batch, paddings, mode='CONSTANT', constant_values=0.5)
@@ -14,9 +13,9 @@ def pad(n):
 
 
 def random_crop(n):
-    '''Constructs a tensor-native function that strips from a batch of images
-    a randomly selected border consisting of n pixels in both vertical and 
-    horizontal directions, i.e. it reduces dimensions by (0, n, n, 0).'''
+    """Constructs a tensor-native function that strips from a batch of images a randomly selected
+    border consisting of n pixels in both vertical and horizontal directions, i.e. it reduces
+    dimensions by (0, n, n, 0)."""
     def tr(img_batch):
         crop_shape = tf.shape(img_batch) - [0, n, n, 0]
         img_batch = tf.image.random_crop(img_batch, crop_shape)
@@ -25,10 +24,10 @@ def random_crop(n):
 
 
 def random_scale(min_scale, max_scale):
-    '''Constructs a tensor-native function that scales a batch of images by a 
-    factor randomly selected between min_scale and max_scale.'''
-    scale = np.random.uniform(min_scale, max_scale)
+    """Constructs a tensor-native function that scales a batch of images by a factor randomly
+    selected between min_scale and max_scale."""
     def tr(img_batch):
+        scale = np.random.uniform(min_scale, max_scale)
         new_shape = tf.cast(tf.cast(tf.shape(img_batch)[1:3], tf.float32) * scale, tf.int32)
         img_batch = tf.image.resize(img_batch, new_shape)
         return img_batch
@@ -36,9 +35,9 @@ def random_scale(min_scale, max_scale):
 
 
 def random_rotate(max_angle, p=1.0):
-    '''Constructs a tensor-native function that rotates a batch of images by an
-    angle randomly selected, either uniformly between -max_angle and max_angle 
-    with probability p, or to be 0 with probability 1-p.'''
+    """Constructs a tensor-native function that rotates a batch of images by an angle randomly
+    selected, either uniformly between -max_angle and max_angle with probability p, or to be 0 with
+    probability 1-p."""
     def tr(img_batch):
         if np.random.rand() > p:
             return img_batch
@@ -50,39 +49,33 @@ def random_rotate(max_angle, p=1.0):
 
 def _rotate(img_batch, angle, fill=0.5, interpolate='bilinear'):
     
-    '''Rotates a batch of images by an angle, in a tensor-native way. 
+    """Rotates a batch of images by an angle, in a tensor-native way.
 
-    Note: The author decides to implement a rotation function 'from scratch'
-    because (1) the rotation function used in Lucid seems to be deprecated in
-    tensorflow 2, and (2) the only other tensor-native rotation function the
-    author is aware of is in tensorflow-addons, but the author wants to avoid
-    dependency on another package.
+    Note: The author decides to implement a rotation function 'from scratch' because (1) the
+    rotation function used in Lucid seems to be deprecated in tensorflow 2, and (2) the only other
+    tensor-native rotation function the author is aware of is in tensorflow-addons, but the author
+    wants to avoid dependency on another package.
     
     Parameters
     ----------
     img_batch : 4D tensor
         Batch of images, with dimensions (batch, height, width, channel).
-    
     angle : float
         Angle of rotation.
-    
     fill : float or int or 'nearest'
-        Method of filling the exterior. In the case of a float or int, the 
-        exterior is filled with the given constant value. In the case of 
-        'nearest', the exterior is filled according to the nearest pixel on the
-        boundary.
-    
+        Method of filling the exterior. In the case of a float or int, the exterior is filled with
+        the given constant value. In the case of 'nearest', the exterior is filled according to the
+        nearest pixel on the boundary.
     interpolate : 'nearest' or 'bilinear'
-        Method of interpolation between rotated grid points. In the case of
-        'nearest', every point is interpolated to the nearest rotated grid 
-        point. In the case of 'bilinear', every point is interpolated 
-        bilinearly from the four neighboring grid points.
+        Method of interpolation between rotated grid points. In the case of 'nearest', every point
+        is interpolated to the nearest rotated grid point. In the case of 'bilinear', every point is
+        interpolated bilinearly from the four neighboring grid points.
     
     Returns
     -------
     img_batch : 4D tensor
         Batch of rotated images, with the same dimensions.
-    '''
+    """
     
     if type(fill) in [float, int]:
         # pad with an extra pixel around the boundary with the specified value
@@ -140,7 +133,7 @@ def _rotate(img_batch, angle, fill=0.5, interpolate='bilinear'):
 
 
 def _add_batch_channel_idx(idx, batch, ch):
-    '''Expands an array of spatial indices into an array of indices that also
+    """Expands an array of spatial indices into an array of indices that also
     include batch and channel dimensions. 
     
     The input idx is expected to be an array of shape (h, w, ..., 2) with, say,
@@ -148,7 +141,7 @@ def _add_batch_channel_idx(idx, batch, ch):
     
     The output will then be an array of shape (batch, h, w, ch, ..., 4) with
     idx[b, i, j, c, ...] = [b, i', j', c].
-    '''
+    """
     sh = idx.shape[:-1]
     idx = [np.append(np.ones((*sh, 1)) * b, idx, axis=-1) for b in range(batch)]
     idx = np.stack(idx, axis=0)
@@ -158,12 +151,10 @@ def _add_batch_channel_idx(idx, batch, ch):
 
 
 def default_list():
-    '''Default list of transformations (as in Lucid).'''
+    """Default list of transformations (as in Lucid)."""
     l = [pad(12), 
          random_crop(8), 
          random_scale(0.9, 1.1), 
          random_rotate(10, p=0.8), 
          random_crop(4)]
     return l
-
-

@@ -5,54 +5,42 @@ import matplotlib.pyplot as plt
 from mini_lucid_tf2 import params, transformations
 
 
-def render_vis(objective, img_size, batch=None, optimizer=None, steps=[200],
+def render_vis(objective, img_size, batch=None, optimizer=None, steps=(200,),
                freq_decay=1.0, rgb_corr=True, transforms=None, display_plots=False):
-    
-    '''Generates a visualization via maximizing an objective function on 
-    an image (batch).
+    """Generates and displays an image (batch) that maximizes an objective function.
 
     Parameters
     ----------
     objective : objectives.Objective
         Objective of visualization.
-        
     img_size : int
         Size of each image (both its height and width).
-        
     batch : int
-        Batch size of images. If a specific value is required by 'objective',
-        it is overridden accordingly. Otherwise, in the case of None, it
-        defaults to 1.
-        
+        Batch size of images. If a specific value is required by 'objective', it is overridden
+        accordingly. Otherwise, in the case of None, it defaults to 1.
     optimizer : tf.keras.optimizers.Optimizer
-        Optimizer. In the case of None, Adam with a learning rate of 0.05 is
-        used (as in Lucid).
-        
-    steps : list of int
-        Optimization steps at which intermediate results are displayed. The
-        largest number also determines the number of optimization steps.
-    
+        Optimizer. In the case of None, Adam with a learning rate of 0.05 is used (as in Lucid).
+    steps : tuple of ints
+        Optimization steps at which intermediate results are displayed. The largest number also
+        determines the number of optimization steps.
     freq_decay : float
-        Frequency decay rate, controlling the downscaling of high frequency
-        modes. (See params.ImageParam.)
-    
+        Frequency decay rate, controlling the downscaling of high frequency modes. (See
+        params.ImageParam.)
     rgb_corr: bool
         Whether to impose empirical RGB correlations. (See params.ImageParam.)
-    
     transforms : list of functions taking an image to an image
-        Perturbations to be applied to the images at each optimization step.
-        In the case of None, a default list is used.
-        
+        Perturbations to be applied to the images at each optimization step. In the case of None, a
+        default list is used.
     display_plots : bool
-        Whether to display plots of convergence progress, i.e. mean absolute 
-        change of pixels and objective values.
+        Whether to display plots of convergence progress, i.e. mean absolute change of pixels and
+        objective values.
     
     Returns
     -------
     img_batch : 4D tensor
-        Visualization of the specified objective as given by the optimization
-        result. The dimensions are ('batch', 'img_size', 'img_size', 3).
-    '''
+        Visualization of the specified objective as given by the optimization result, of the shape
+        (batch size, image size, image size, 3).
+    """
 
     batch = objective.batch or batch or 1
     transforms = transforms or transformations.default_list()
@@ -77,7 +65,7 @@ def render_vis(objective, img_size, batch=None, optimizer=None, steps=[200],
                 print(f'Step {i}')
                 display_image_batch(img_batch)
             
-           # record the mean pixel changes over this step 
+            # record the mean pixel changes over this step
             if i > 0:
                 var = tf.abs(img_batch - prev_img_batch)
                 var_path[:, i-1] = tf.reduce_mean(var, [1, 2, 3]).numpy()
@@ -112,14 +100,13 @@ def render_vis(objective, img_size, batch=None, optimizer=None, steps=[200],
 
 
 def display_image_batch(img_batch):
-    
-    '''Displays a batch of images (in rows of four).
-    
+    """Displays a batch of images (in rows of four).
+
     Parameters
     ----------
     img_batch : 4D tensor
         Batch of images, with dimensions (batch, height, width, channel).
-    '''
+    """
 
     batch = tf.shape(img_batch).numpy()[0]
     cols, rows = 4, (batch - 1) // 4 + 1
@@ -133,26 +120,22 @@ def display_image_batch(img_batch):
 
 
 def display_plot_batch(path_batch, title, **ax_args):
+    """Plots a batch of curves (in rows of four).
 
-    '''Plots a batch of curves (in rows of four).
-    
     Parameters
     ----------
     path_batch : 2D array
-        Batch of sequences to be plotted, with dimensions (batch, sequence).                                                                          
-    
+        Batch of sequences to be plotted, with dimensions (batch, sequence).
     title : str
         Title of the plots.
-    
     ax_args : keyword arguments
         Axes arguments that are accepted by matplotlib.axes.Axes.set().
-    
-    '''
+    """
     
     batch = path_batch.shape[0]
     cols, rows = 4, (batch - 1) // 4 + 1
     
-    fig, axs = plt.subplots(rows, cols, figsize=(4 * cols, 0.5 + 4 * rows), sharey=True)
+    fig, axs = plt.subplots(rows, cols, sharey=True, figsize=(4 * cols, 0.5 + 4 * rows))
     plt.subplots_adjust(hspace=0, wspace=0)
     fig.suptitle(title)
     axs = axs.flatten()
@@ -162,5 +145,3 @@ def display_plot_batch(path_batch, title, **ax_args):
     for i in range(batch, cols * rows):
         axs[i].axis('off')
     plt.show()
-    
-
