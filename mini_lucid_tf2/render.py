@@ -71,9 +71,10 @@ def render_vis(objective, img_size, batch=None, optimizer=None, steps=(200,),
                 var_path[:, i-1] = tf.reduce_mean(var, [1, 2, 3]).numpy()
             prev_img_batch = img_batch
             
-            # apply perturbations
+            # apply perturbations and restore the image size
             for transform in transforms:
                 img_batch = transform(img_batch)
+            img_batch = tf.image.resize(img_batch, [img_size, img_size])
     
             # compute and record objective value
             obj_val = objective(img_batch)

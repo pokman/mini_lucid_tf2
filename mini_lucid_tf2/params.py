@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 # empirical RGB covariance matrix (based on the square root used in Lucid)
-rgb_cov = np.array([[0.0761, 0.0692, 0.0627],
+RGB_COV = np.array([[0.0761, 0.0692, 0.0627],
                     [0.0692, 0.0754, 0.0714],
                     [0.0627, 0.0714, 0.0819]], dtype=np.float32)
 
@@ -87,8 +87,8 @@ class ImageParam(object):
         
         if self.rgb_corr:
             # impose empirical RGB correlations
-            rgb_cov_sqrt = np.linalg.cholesky(rgb_cov)
-            max_rgb_sd = np.sqrt(np.diagonal(rgb_cov).max())
+            rgb_cov_sqrt = np.linalg.cholesky(RGB_COV)
+            max_rgb_sd = np.sqrt(np.diagonal(RGB_COV).max())
             param_irfft = param_irfft @ rgb_cov_sqrt.T / max_rgb_sd
         
         # squeeze into [0,1] (with unit slope at 0)
